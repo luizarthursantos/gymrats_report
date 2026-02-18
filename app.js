@@ -72,36 +72,56 @@ let savedToken = null;
 let savedChallengeId = null;
 
 function setupFetch() {
+  // No-data screen form
   const fetchBtn = document.getElementById('fetch-btn');
-  if (fetchBtn) fetchBtn.addEventListener('click', handleFetch);
-  const refreshBtn = document.getElementById('refresh-btn');
-  if (refreshBtn) refreshBtn.addEventListener('click', handleRefresh);
-
-  // Submit on Enter in fetch form
+  if (fetchBtn) fetchBtn.addEventListener('click', () => handleFetch(''));
   ['gr-email', 'gr-password', 'gr-challenge'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFetch(); });
+    if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFetch(''); });
+  });
+
+  // Header modal
+  const modalBtn = document.getElementById('fetch-modal-btn');
+  const modal = document.getElementById('fetch-modal');
+  const modalClose = document.getElementById('fetch-modal-close');
+  const modalFetchBtn = document.getElementById('modal-fetch-btn');
+
+  if (modalBtn) modalBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+  if (modalClose) modalClose.addEventListener('click', () => modal.classList.add('hidden'));
+  if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+  if (modalFetchBtn) modalFetchBtn.addEventListener('click', () => handleFetch('modal-'));
+
+  ['modal-gr-email', 'modal-gr-password', 'modal-gr-challenge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFetch('modal-'); });
   });
 }
 
+let activePrefix = '';
+
 function setFetchStatus(msg, isError) {
-  const el = document.getElementById('fetch-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.toggle('error', !!isError);
+  // Update status on both forms
+  ['fetch-status', 'modal-fetch-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = msg;
+      el.classList.toggle('error', !!isError);
+    }
+  });
 }
 
-async function handleFetch() {
-  const email = document.getElementById('gr-email').value.trim();
-  const password = document.getElementById('gr-password').value;
-  const challengeId = document.getElementById('gr-challenge').value.trim();
+async function handleFetch(prefix) {
+  activePrefix = prefix;
+  const email = document.getElementById(prefix + 'gr-email').value.trim();
+  const password = document.getElementById(prefix + 'gr-password').value;
+  const challengeId = document.getElementById(prefix + 'gr-challenge').value.trim();
 
   if (!email || !password || !challengeId) {
     setFetchStatus('Please fill in all fields', true);
     return;
   }
 
-  const fetchBtn = document.getElementById('fetch-btn');
+  const fetchBtn = document.getElementById(prefix === 'modal-' ? 'modal-fetch-btn' : 'fetch-btn');
   fetchBtn.disabled = true;
   setFetchStatus('Logging in...');
 
@@ -122,18 +142,6 @@ async function handleFetch() {
   }
 }
 
-async function handleRefresh() {
-  if (!savedToken || !savedChallengeId) return;
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  try {
-    await fetchChallengeData(savedToken, savedChallengeId);
-  } catch (err) {
-    alert('Refresh failed: ' + (err.message || 'Unknown error'));
-  } finally {
-    btn.classList.remove('spinning');
-  }
-}
 
 async function fetchChallengeData(token, challengeId) {
   setFetchStatus('Fetching challenge info...');
@@ -228,9 +236,9 @@ async function fetchChallengeData(token, challengeId) {
 
   setFetchStatus(`Loaded ${checkIns.length} check-ins from ${members.length} members`);
 
-  // Show refresh button in header
-  const refreshBtn = document.getElementById('refresh-btn');
-  if (refreshBtn) refreshBtn.classList.remove('hidden');
+  // Close modal if open
+  const modal = document.getElementById('fetch-modal');
+  if (modal) modal.classList.add('hidden');
 
   loadData(data);
 }

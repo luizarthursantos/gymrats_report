@@ -16,7 +16,7 @@
         <p id="challenge-desc" class="challenge-description"></p>
       </div>
       <div class="header-right">
-        <button class="header-icon-btn hidden" id="refresh-btn" aria-label="Refresh data" title="Refresh from GymRats">
+        <button class="header-icon-btn" id="fetch-modal-btn" aria-label="Fetch from GymRats" title="Fetch from GymRats API">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         </button>
         <label class="upload-btn" for="json-upload">
@@ -125,6 +125,26 @@
       </div>
     </section>
   </main>
+
+  <!-- Fetch Modal -->
+  <div id="fetch-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Fetch from GymRats</h3>
+        <button class="modal-close" id="fetch-modal-close">&times;</button>
+      </div>
+      <div class="fetch-form" id="modal-fetch-form">
+        <input type="email" id="modal-gr-email" placeholder="GymRats email" autocomplete="email">
+        <input type="password" id="modal-gr-password" placeholder="Password" autocomplete="current-password">
+        <input type="text" id="modal-gr-challenge" placeholder="Challenge ID">
+        <button class="upload-btn large" id="modal-fetch-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Fetch Data
+        </button>
+        <p id="modal-fetch-status" class="fetch-status"></p>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
