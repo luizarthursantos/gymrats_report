@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GymRats Challenge Report</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="header-left">
+        <h1 id="challenge-name">GymRats Challenge Report</h1>
+        <p id="challenge-desc" class="challenge-description"></p>
+      </div>
+      <div class="header-right">
+        <label class="upload-btn" for="json-upload">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload JSON
+        </label>
+        <input type="file" id="json-upload" accept=".json" hidden>
+      </div>
+    </div>
+  </header>
+
+  <div id="no-data-screen" class="no-data">
+    <div class="no-data-content">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <h2>No data loaded</h2>
+      <p>Upload a GymRats challenge JSON file to get started</p>
+      <label class="upload-btn large" for="json-upload-empty">
+        Upload JSON File
+      </label>
+      <input type="file" id="json-upload-empty" accept=".json" hidden>
+    </div>
+  </div>
+
+  <main id="main-content" class="hidden">
+    <nav class="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <div class="tab-separator"></div>
+      <div class="member-tabs" id="member-tabs"></div>
+    </nav>
+
+    <div class="filters">
+      <div class="period-filters">
+        <button class="period-btn active" data-period="total">Total</button>
+        <button class="period-btn" data-period="year">Year</button>
+        <button class="period-btn" data-period="month">Month</button>
+        <button class="period-btn" data-period="week">Week</button>
+      </div>
+      <div class="period-nav hidden" id="period-nav">
+        <button class="nav-btn" id="prev-period">&larr;</button>
+        <span id="period-label"></span>
+        <button class="nav-btn" id="next-period">&rarr;</button>
+      </div>
+    </div>
+
+    <!-- Overview Tab -->
+    <section id="tab-overview" class="tab-content active">
+      <div class="stats-row" id="overview-stats"></div>
+      <div class="charts-grid">
+        <div class="chart-card wide">
+          <h3>Workouts Over Time</h3>
+          <canvas id="chart-workouts-time"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Total Workouts per Member</h3>
+          <canvas id="chart-workouts-member"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Calories Burned per Member</h3>
+          <canvas id="chart-calories-member"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Activity Types Distribution</h3>
+          <canvas id="chart-activity-types"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Total Duration per Member (hours)</h3>
+          <canvas id="chart-duration-member"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Points per Member</h3>
+          <canvas id="chart-points-member"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Average Calories per Workout</h3>
+          <canvas id="chart-avg-calories"></canvas>
+        </div>
+        <div class="chart-card wide">
+          <h3>Workout Heatmap (Day of Week)</h3>
+          <canvas id="chart-heatmap"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Personal Tab (dynamic) -->
+    <section id="tab-personal" class="tab-content">
+      <div class="personal-header" id="personal-header"></div>
+      <div class="stats-row" id="personal-stats"></div>
+      <div class="charts-grid">
+        <div class="chart-card wide">
+          <h3>Workout History</h3>
+          <canvas id="chart-personal-history"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Activity Breakdown</h3>
+          <canvas id="chart-personal-activities"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Calories Over Time</h3>
+          <canvas id="chart-personal-calories"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Duration per Workout (min)</h3>
+          <canvas id="chart-personal-duration"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Points Over Time</h3>
+          <canvas id="chart-personal-points"></canvas>
+        </div>
+        <div class="chart-card wide">
+          <h3>Workout Days (Day of Week)</h3>
+          <canvas id="chart-personal-weekday"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
