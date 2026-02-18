@@ -10,32 +10,12 @@ let charts = {};
 const COLORS = [
   '#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4',
   '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#64748b',
-  '#a855f7', '#84cc16', '#e11d48', '#0ea5e9', '#fbbf24'
+  '#a855f7', '#84cc16', '#e11d48', '#0ea5e9', '#fbbf24',
+  '#fb923c', '#2dd4bf', '#a78bfa'
 ];
 
-const ACTIVITY_COLORS = {
-  strength_training: '#6366f1',
-  weight_lifting: '#818cf8',
-  cycling: '#22c55e',
-  spinning: '#16a34a',
-  running: '#f59e0b',
-  treadmill: '#d97706',
-  walking: '#06b6d4',
-  swimming: '#ec4899',
-  surfing: '#f472b6',
-  yoga: '#8b5cf6',
-  pilates: '#a78bfa',
-  hiit: '#ef4444',
-  functional_training: '#dc2626',
-  core_training: '#fb923c',
-  martial_arts: '#e11d48',
-  tennis: '#0ea5e9',
-  table_tennis: '#38bdf8',
-  mixed_cardio: '#14b8a6',
-  stairs: '#fbbf24',
-  elliptical: '#84cc16',
-  other: '#64748b'
-};
+const DAY_CAP = 2;
+const WEEK_CAP = 10;
 
 // ── Chart.js defaults ──
 Chart.defaults.color = '#8b8fa3';
@@ -59,8 +39,7 @@ function tryLoadDefaultData() {
 
 // ── File Upload ──
 function setupUpload() {
-  const handlers = ['json-upload', 'json-upload-empty'];
-  handlers.forEach(id => {
+  ['json-upload', 'json-upload-empty'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', handleUpload);
   });
@@ -72,8 +51,7 @@ function handleUpload(e) {
   const reader = new FileReader();
   reader.onload = (ev) => {
     try {
-      const data = JSON.parse(ev.target.result);
-      loadData(data);
+      loadData(JSON.parse(ev.target.result));
     } catch (err) {
       alert('Invalid JSON file');
     }
@@ -88,8 +66,7 @@ function loadData(data) {
   document.getElementById('no-data-screen').classList.add('hidden');
   document.getElementById('main-content').classList.remove('hidden');
   document.getElementById('challenge-name').textContent = data.name || 'GymRats Challenge Report';
-  const desc = data.description || '';
-  document.getElementById('challenge-desc').textContent = desc.replace(/\n/g, ' · ');
+  document.getElementById('challenge-desc').textContent = (data.description || '').replace(/\n/g, ' · ');
   buildMemberTabs();
   currentTab = 'overview';
   selectedMemberId = null;
@@ -97,25 +74,27 @@ function loadData(data) {
   renderAll();
 }
 
-// ── Members map ──
+// ── Members ──
 function getMembersMap() {
   const map = {};
   (challengeData.members || []).forEach(m => { map[m.id] = m; });
   return map;
 }
 
+function memberName(id, members) {
+  const m = members[parseInt(id)];
+  return m ? m.full_name.split(' ').slice(0, 2).join(' ') : `User ${id}`;
+}
+
 // ── Tabs ──
 function setupTabs() {
-  document.querySelector('.tab[data-tab="overview"]').addEventListener('click', () => {
-    switchTab('overview');
-  });
+  document.querySelector('.tab[data-tab="overview"]').addEventListener('click', () => switchTab('overview'));
 }
 
 function buildMemberTabs() {
   const container = document.getElementById('member-tabs');
   container.innerHTML = '';
-  const members = (challengeData.members || []).sort((a, b) => a.full_name.localeCompare(b.full_name));
-  members.forEach(m => {
+  (challengeData.members || []).sort((a, b) => a.full_name.localeCompare(b.full_name)).forEach(m => {
     const btn = document.createElement('button');
     btn.className = 'tab';
     btn.dataset.memberId = m.id;
@@ -129,7 +108,6 @@ function switchTab(tab, memberId = null) {
   currentTab = tab;
   selectedMemberId = memberId;
   periodOffset = 0;
-
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   if (tab === 'overview') {
     document.querySelector('.tab[data-tab="overview"]').classList.add('active');
@@ -138,10 +116,8 @@ function switchTab(tab, memberId = null) {
       if (parseInt(t.dataset.memberId) === memberId) t.classList.add('active');
     });
   }
-
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById(tab === 'overview' ? 'tab-overview' : 'tab-personal').classList.add('active');
-
   renderAll();
 }
 
@@ -156,36 +132,20 @@ function setupPeriodFilters() {
       renderAll();
     });
   });
-
-  document.getElementById('prev-period').addEventListener('click', () => {
-    periodOffset--;
-    renderAll();
-  });
-
-  document.getElementById('next-period').addEventListener('click', () => {
-    if (periodOffset < 0) {
-      periodOffset++;
-      renderAll();
-    }
-  });
+  document.getElementById('prev-period').addEventListener('click', () => { periodOffset--; renderAll(); });
+  document.getElementById('next-period').addEventListener('click', () => { if (periodOffset < 0) { periodOffset++; renderAll(); } });
 }
 
 // ── Date Range ──
 function getDateRange() {
   const now = new Date();
   if (currentPeriod === 'total') return { start: null, end: null, label: 'All Time' };
-
   let start, end, label;
   if (currentPeriod === 'week') {
-    const ref = new Date(now);
-    ref.setDate(ref.getDate() + periodOffset * 7);
+    const ref = new Date(now); ref.setDate(ref.getDate() + periodOffset * 7);
     const day = ref.getDay();
-    start = new Date(ref);
-    start.setDate(ref.getDate() - (day === 0 ? 6 : day - 1));
-    start.setHours(0, 0, 0, 0);
-    end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
+    start = new Date(ref); start.setDate(ref.getDate() - (day === 0 ? 6 : day - 1)); start.setHours(0, 0, 0, 0);
+    end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
     label = `${fmtDate(start)} – ${fmtDate(end)}`;
   } else if (currentPeriod === 'month') {
     const ref = new Date(now.getFullYear(), now.getMonth() + periodOffset, 1);
@@ -194,17 +154,13 @@ function getDateRange() {
     label = start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   } else if (currentPeriod === 'year') {
     const year = now.getFullYear() + periodOffset;
-    start = new Date(year, 0, 1);
-    end = new Date(year, 11, 31, 23, 59, 59, 999);
+    start = new Date(year, 0, 1); end = new Date(year, 11, 31, 23, 59, 59, 999);
     label = String(year);
   }
-
   return { start, end, label };
 }
 
-function fmtDate(d) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
+function fmtDate(d) { return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 
 function filterCheckIns(checkIns, range, memberId = null) {
   return checkIns.filter(ci => {
@@ -217,7 +173,73 @@ function filterCheckIns(checkIns, range, memberId = null) {
   });
 }
 
-// ── Render ──
+// ═══════════════════════════════════════════════════════════
+// ── CAPPING LOGIC ──
+// Cap: max 2 check-ins per day, max 10 per week (Mon–Sun)
+// ═══════════════════════════════════════════════════════════
+
+function getISOWeekKey(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return monday.toISOString().slice(0, 10);
+}
+
+// Returns { memberId: { weekKey: cappedWeeklyCount } }
+function computeCappedScores(checkIns) {
+  // Step 1: raw daily counts per member
+  const daily = {}; // { `${memberId}|${date}`: rawCount }
+  checkIns.forEach(ci => {
+    const date = (ci.occurred_at || ci.created_at || '').slice(0, 10);
+    if (!date) return;
+    const key = `${ci.account_id}|${date}`;
+    daily[key] = (daily[key] || 0) + 1;
+  });
+
+  // Step 2: cap daily at DAY_CAP, group by member+week
+  const weekly = {}; // { `${memberId}|${weekKey}`: sum of dailyCapped }
+  for (const [key, rawCount] of Object.entries(daily)) {
+    const [memberId, date] = key.split('|');
+    const weekKey = getISOWeekKey(date);
+    const wk = `${memberId}|${weekKey}`;
+    weekly[wk] = (weekly[wk] || 0) + Math.min(rawCount, DAY_CAP);
+  }
+
+  // Step 3: cap weekly at WEEK_CAP, structure as { memberId: { weekKey: capped } }
+  const result = {};
+  for (const [key, sum] of Object.entries(weekly)) {
+    const [memberId, weekKey] = key.split('|');
+    if (!result[memberId]) result[memberId] = {};
+    result[memberId][weekKey] = Math.min(sum, WEEK_CAP);
+  }
+  return result;
+}
+
+// Returns { date: cappedCount } for a single member (daily capped at 2)
+function computeDailyCapped(checkIns, memberId) {
+  const raw = {};
+  checkIns.forEach(ci => {
+    if (ci.account_id !== memberId) return;
+    const date = (ci.occurred_at || ci.created_at || '').slice(0, 10);
+    if (date) raw[date] = (raw[date] || 0) + 1;
+  });
+  const capped = {};
+  for (const [date, count] of Object.entries(raw)) {
+    capped[date] = Math.min(count, DAY_CAP);
+  }
+  return capped;
+}
+
+function getTotalCapped(scores, memberId) {
+  const weeks = scores[memberId] || {};
+  return Object.values(weeks).reduce((s, v) => s + v, 0);
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── RENDER ──
+// ═══════════════════════════════════════════════════════════
+
 function renderAll() {
   const range = getDateRange();
   const nav = document.getElementById('period-nav');
@@ -227,151 +249,169 @@ function renderAll() {
     nav.classList.remove('hidden');
     document.getElementById('period-label').textContent = range.label;
   }
-
-  if (currentTab === 'overview') {
-    renderOverview(range);
-  } else {
-    renderPersonal(range);
-  }
+  if (currentTab === 'overview') renderOverview(range);
+  else renderPersonal(range);
 }
 
 // ── Overview ──
 function renderOverview(range) {
   const checkIns = filterCheckIns(challengeData.check_ins || [], range);
   const members = getMembersMap();
+  const scores = computeCappedScores(checkIns);
 
-  renderOverviewStats(checkIns, members);
-  renderWorkoutsOverTime(checkIns, range);
-  renderWorkoutsPerMember(checkIns, members);
-  renderCaloriesPerMember(checkIns, members);
-  renderActivityTypes(checkIns);
-  renderDurationPerMember(checkIns, members);
-  renderPointsPerMember(checkIns, members);
-  renderAvgCalories(checkIns, members);
-  renderWeekdayHeatmap(checkIns, members);
+  renderOverviewStats(checkIns, members, scores);
+  renderRaceChart(checkIns, members, scores);
+  renderRanking(members, scores);
+  renderWeeklyOverview(members, scores);
+  renderWeekdayOverview(checkIns, members);
 }
 
-function renderOverviewStats(checkIns, members) {
-  const totalWorkouts = checkIns.length;
-  const totalCalories = checkIns.reduce((s, ci) => s + (ci.calories || 0), 0);
-  const totalDuration = checkIns.reduce((s, ci) => s + (ci.duration || 0), 0);
-  const totalPoints = checkIns.reduce((s, ci) => s + (ci.points || 0), 0);
-  const activeMemberIds = new Set(checkIns.map(ci => ci.account_id));
-  const avgPerMember = activeMemberIds.size ? (totalWorkouts / activeMemberIds.size).toFixed(1) : 0;
+function renderOverviewStats(checkIns, members, scores) {
+  const rawTotal = checkIns.length;
+  let cappedTotal = 0;
+  const memberTotals = {};
+  for (const [mid, weeks] of Object.entries(scores)) {
+    const t = Object.values(weeks).reduce((s, v) => s + v, 0);
+    memberTotals[mid] = t;
+    cappedTotal += t;
+  }
+  const activeCount = Object.keys(scores).length;
+  const avg = activeCount ? (cappedTotal / activeCount).toFixed(1) : 0;
+
+  // Find leader
+  let leader = '-';
+  let leaderScore = 0;
+  for (const [mid, t] of Object.entries(memberTotals)) {
+    if (t > leaderScore) { leaderScore = t; leader = memberName(mid, members); }
+  }
 
   document.getElementById('overview-stats').innerHTML = `
-    <div class="stat-card"><div class="label">Total Workouts</div><div class="value">${totalWorkouts}</div></div>
-    <div class="stat-card"><div class="label">Total Calories</div><div class="value">${formatNum(totalCalories)}</div></div>
-    <div class="stat-card"><div class="label">Total Hours</div><div class="value">${(totalDuration / 60).toFixed(1)}</div></div>
-    <div class="stat-card"><div class="label">Total Points</div><div class="value">${formatNum(totalPoints)}</div></div>
-    <div class="stat-card"><div class="label">Active Members</div><div class="value">${activeMemberIds.size}</div></div>
-    <div class="stat-card"><div class="label">Avg per Member</div><div class="value">${avgPerMember}</div><div class="sub">workouts</div></div>
+    <div class="stat-card"><div class="label">Capped Check-ins</div><div class="value">${cappedTotal}</div><div class="sub">${rawTotal} raw</div></div>
+    <div class="stat-card"><div class="label">Active Members</div><div class="value">${activeCount}</div></div>
+    <div class="stat-card"><div class="label">Avg per Member</div><div class="value">${avg}</div><div class="sub">capped check-ins</div></div>
+    <div class="stat-card"><div class="label">Leader</div><div class="value" style="font-size:1.1rem">${leader}</div><div class="sub">${leaderScore} check-ins</div></div>
   `;
 }
 
-function renderWorkoutsOverTime(checkIns, range) {
-  const grouped = {};
-  checkIns.forEach(ci => {
-    const d = (ci.occurred_at || ci.created_at || '').slice(0, 10);
-    if (d) grouped[d] = (grouped[d] || 0) + 1;
-  });
+// ── F1-style Race Chart ──
+function renderRaceChart(checkIns, members, scores) {
+  // Collect all week keys across all members, sorted
+  const allWeeks = new Set();
+  for (const weeks of Object.values(scores)) {
+    for (const wk of Object.keys(weeks)) allWeeks.add(wk);
+  }
+  const sortedWeeks = [...allWeeks].sort();
+  if (sortedWeeks.length === 0) { createChart('chart-race', 'line', { datasets: [] }); return; }
 
-  const sorted = Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-  createChart('chart-workouts-time', 'bar', {
-    labels: sorted.map(e => e[0]),
-    datasets: [{
-      label: 'Workouts',
-      data: sorted.map(e => e[1]),
-      backgroundColor: '#6366f1',
-      borderRadius: 3,
-      barPercentage: 0.8
-    }]
-  }, {
-    scales: {
-      x: { type: 'time', time: { unit: getBestTimeUnit(sorted.length), tooltipFormat: 'MMM d, yyyy' } },
-      y: { beginAtZero: true, ticks: { precision: 0 } }
-    }
-  });
-}
+  // Build week labels like "W1", "W2", ...
+  const weekLabels = sortedWeeks.map((_, i) => `W${i + 1}`);
 
-function renderWorkoutsPerMember(checkIns, members) {
-  const counts = {};
-  checkIns.forEach(ci => { counts[ci.account_id] = (counts[ci.account_id] || 0) + 1; });
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  memberBarChart('chart-workouts-member', sorted, members, 'Workouts');
-}
+  // Sort members by total score descending for consistent legend ordering
+  const memberIds = Object.keys(scores).sort((a, b) => getTotalCapped(scores, b) - getTotalCapped(scores, a));
 
-function renderCaloriesPerMember(checkIns, members) {
-  const counts = {};
-  checkIns.forEach(ci => { counts[ci.account_id] = (counts[ci.account_id] || 0) + (ci.calories || 0); });
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  memberBarChart('chart-calories-member', sorted, members, 'Calories');
-}
-
-function renderActivityTypes(checkIns) {
-  const counts = {};
-  checkIns.forEach(ci => {
-    (ci.check_in_activities || []).forEach(a => {
-      const type = a.platform_activity || 'other';
-      counts[type] = (counts[type] || 0) + 1;
+  const datasets = memberIds.map((mid, idx) => {
+    let cum = 0;
+    const data = sortedWeeks.map(wk => {
+      cum += (scores[mid] || {})[wk] || 0;
+      return cum;
     });
+    return {
+      label: memberName(mid, members),
+      data,
+      borderColor: COLORS[idx % COLORS.length],
+      backgroundColor: COLORS[idx % COLORS.length],
+      borderWidth: 2.5,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      tension: 0.15,
+      fill: false
+    };
   });
 
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  createChart('chart-activity-types', 'doughnut', {
-    labels: sorted.map(e => formatActivity(e[0])),
+  createChart('chart-race', 'line', { labels: weekLabels, datasets }, {
+    scales: {
+      x: { title: { display: true, text: 'Week' } },
+      y: { beginAtZero: true, title: { display: true, text: 'Cumulative Check-ins' }, ticks: { precision: 0 } }
+    },
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          title: (items) => {
+            const idx = items[0].dataIndex;
+            const wkStart = sortedWeeks[idx];
+            return `Week ${idx + 1} (${wkStart})`;
+          }
+        }
+      }
+    },
+    interaction: { mode: 'index', intersect: false },
+    hover: { mode: 'index', intersect: false }
+  });
+}
+
+// ── Ranking Bar ──
+function renderRanking(members, scores) {
+  const sorted = Object.keys(scores)
+    .map(mid => [mid, getTotalCapped(scores, mid)])
+    .sort((a, b) => b[1] - a[1]);
+
+  createChart('chart-ranking', 'bar', {
+    labels: sorted.map(e => memberName(e[0], members)),
     datasets: [{
+      label: 'Check-ins',
       data: sorted.map(e => e[1]),
-      backgroundColor: sorted.map(e => ACTIVITY_COLORS[e[0]] || ACTIVITY_COLORS.other),
-      borderWidth: 0
+      backgroundColor: sorted.map((_, i) => COLORS[i % COLORS.length]),
+      borderRadius: 6,
+      barPercentage: 0.7
     }]
   }, {
-    plugins: { legend: { position: 'right', labels: { boxWidth: 14, padding: 12 } } }
+    indexAxis: 'y',
+    scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+    plugins: { legend: { display: false } }
   });
 }
 
-function renderDurationPerMember(checkIns, members) {
-  const counts = {};
-  checkIns.forEach(ci => { counts[ci.account_id] = (counts[ci.account_id] || 0) + (ci.duration || 0); });
-  const sorted = Object.entries(counts)
-    .map(([id, val]) => [id, +(val / 60).toFixed(1)])
-    .sort((a, b) => b[1] - a[1]);
-  memberBarChart('chart-duration-member', sorted, members, 'Hours');
-}
+// ── Weekly Overview (stacked bar per member per week) ──
+function renderWeeklyOverview(members, scores) {
+  const allWeeks = new Set();
+  for (const weeks of Object.values(scores)) {
+    for (const wk of Object.keys(weeks)) allWeeks.add(wk);
+  }
+  const sortedWeeks = [...allWeeks].sort();
+  const weekLabels = sortedWeeks.map((_, i) => `W${i + 1}`);
+  const memberIds = Object.keys(scores).sort((a, b) => getTotalCapped(scores, b) - getTotalCapped(scores, a));
 
-function renderPointsPerMember(checkIns, members) {
-  const counts = {};
-  checkIns.forEach(ci => { counts[ci.account_id] = (counts[ci.account_id] || 0) + (ci.points || 0); });
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  memberBarChart('chart-points-member', sorted, members, 'Points');
-}
+  const datasets = memberIds.map((mid, idx) => ({
+    label: memberName(mid, members),
+    data: sortedWeeks.map(wk => (scores[mid] || {})[wk] || 0),
+    backgroundColor: COLORS[idx % COLORS.length],
+    borderRadius: 2,
+    barPercentage: 0.85
+  }));
 
-function renderAvgCalories(checkIns, members) {
-  const sums = {};
-  const cnts = {};
-  checkIns.forEach(ci => {
-    sums[ci.account_id] = (sums[ci.account_id] || 0) + (ci.calories || 0);
-    cnts[ci.account_id] = (cnts[ci.account_id] || 0) + 1;
+  createChart('chart-weekly-overview', 'bar', { labels: weekLabels, datasets }, {
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+    },
+    plugins: { legend: { display: false } }
   });
-  const sorted = Object.entries(sums)
-    .map(([id, total]) => [id, Math.round(total / (cnts[id] || 1))])
-    .sort((a, b) => b[1] - a[1]);
-  memberBarChart('chart-avg-calories', sorted, members, 'Avg Calories');
 }
 
-function renderWeekdayHeatmap(checkIns, members) {
+// ── Weekday Distribution (overview) ──
+function renderWeekdayOverview(checkIns, members) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const memberIds = [...new Set(checkIns.map(ci => ci.account_id))];
-
   const data = {};
   checkIns.forEach(ci => {
     const d = new Date(ci.occurred_at || ci.created_at);
-    let day = d.getDay();
-    day = day === 0 ? 6 : day - 1;
+    let day = d.getDay(); day = day === 0 ? 6 : day - 1;
     const key = `${ci.account_id}-${day}`;
     data[key] = (data[key] || 0) + 1;
   });
-
   const datasets = memberIds.map((id, idx) => ({
     label: memberName(id, members),
     data: days.map((_, di) => data[`${id}-${di}`] || 0),
@@ -379,33 +419,28 @@ function renderWeekdayHeatmap(checkIns, members) {
     borderRadius: 3,
     barPercentage: 0.8
   }));
-
-  createChart('chart-heatmap', 'bar', {
-    labels: days,
-    datasets
-  }, {
-    scales: {
-      x: { stacked: true },
-      y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
-    },
+  createChart('chart-weekday-overview', 'bar', { labels: days, datasets }, {
+    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } },
     plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 11 } } } }
   });
 }
 
-// ── Personal ──
+// ═══════════════════════════════════════════════════════════
+// ── PERSONAL TAB ──
+// ═══════════════════════════════════════════════════════════
+
 function renderPersonal(range) {
   const member = (challengeData.members || []).find(m => m.id === selectedMemberId);
   if (!member) return;
-
   const checkIns = filterCheckIns(challengeData.check_ins || [], range, selectedMemberId);
+  const scores = computeCappedScores(checkIns);
+  const dailyCapped = computeDailyCapped(challengeData.check_ins || [], selectedMemberId);
 
   renderPersonalHeader(member);
-  renderPersonalStats(checkIns);
-  renderPersonalHistory(checkIns);
-  renderPersonalActivities(checkIns);
-  renderPersonalCalories(checkIns);
-  renderPersonalDuration(checkIns);
-  renderPersonalPoints(checkIns);
+  renderPersonalStats(checkIns, scores);
+  renderHeatmap(dailyCapped, range);
+  renderPersonalCumulative(checkIns, scores);
+  renderPersonalWeekly(scores);
   renderPersonalWeekday(checkIns);
 }
 
@@ -417,194 +452,234 @@ function renderPersonalHeader(member) {
     : `<div class="placeholder-avatar">${initials}</div>`;
   const role = member.role === 'owner' ? ' · Owner' : '';
   const joined = new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  container.innerHTML = `
-    ${avatar}
-    <div class="info">
-      <h2>${member.full_name}</h2>
-      <p>Joined ${joined}${role}</p>
-    </div>
-  `;
+  container.innerHTML = `${avatar}<div class="info"><h2>${member.full_name}</h2><p>Joined ${joined}${role}</p></div>`;
 }
 
-function renderPersonalStats(checkIns) {
-  const total = checkIns.length;
-  const cals = checkIns.reduce((s, ci) => s + (ci.calories || 0), 0);
-  const dur = checkIns.reduce((s, ci) => s + (ci.duration || 0), 0);
-  const pts = checkIns.reduce((s, ci) => s + (ci.points || 0), 0);
-  const avgCal = total ? Math.round(cals / total) : 0;
-  const avgDur = total ? Math.round(dur / total) : 0;
+function renderPersonalStats(checkIns, scores) {
+  const mid = String(selectedMemberId);
+  const cappedTotal = getTotalCapped(scores, mid);
+  const rawTotal = checkIns.length;
+  const memberWeeks = scores[mid] || {};
+  const weekValues = Object.values(memberWeeks);
+  const bestWeek = weekValues.length ? Math.max(...weekValues) : 0;
+  const activeWeeks = weekValues.filter(v => v > 0).length;
+  const avgWeek = activeWeeks ? (cappedTotal / activeWeeks).toFixed(1) : 0;
 
-  // Streak calculation
+  // Streak (consecutive days with at least 1 check-in)
   const dates = [...new Set(checkIns.map(ci => (ci.occurred_at || ci.created_at || '').slice(0, 10)))].sort().reverse();
   let streak = 0;
   if (dates.length > 0) {
-    const today = new Date().toISOString().slice(0, 10);
-    let check = dates[0] === today ? new Date() : new Date(dates[0]);
+    let check = new Date(dates[0]);
     for (const d of dates) {
-      if (d === check.toISOString().slice(0, 10)) {
-        streak++;
-        check.setDate(check.getDate() - 1);
-      } else {
-        break;
-      }
+      if (d === check.toISOString().slice(0, 10)) { streak++; check.setDate(check.getDate() - 1); }
+      else break;
     }
   }
 
   document.getElementById('personal-stats').innerHTML = `
-    <div class="stat-card"><div class="label">Workouts</div><div class="value">${total}</div></div>
-    <div class="stat-card"><div class="label">Total Calories</div><div class="value">${formatNum(cals)}</div></div>
-    <div class="stat-card"><div class="label">Total Hours</div><div class="value">${(dur / 60).toFixed(1)}</div></div>
-    <div class="stat-card"><div class="label">Points</div><div class="value">${formatNum(pts)}</div></div>
-    <div class="stat-card"><div class="label">Avg Calories</div><div class="value">${formatNum(avgCal)}</div><div class="sub">per workout</div></div>
-    <div class="stat-card"><div class="label">Avg Duration</div><div class="value">${avgDur}</div><div class="sub">minutes</div></div>
+    <div class="stat-card"><div class="label">Capped Check-ins</div><div class="value">${cappedTotal}</div><div class="sub">${rawTotal} raw</div></div>
+    <div class="stat-card"><div class="label">Best Week</div><div class="value">${bestWeek}</div><div class="sub">of ${WEEK_CAP} max</div></div>
+    <div class="stat-card"><div class="label">Avg per Week</div><div class="value">${avgWeek}</div></div>
+    <div class="stat-card"><div class="label">Active Weeks</div><div class="value">${activeWeeks}</div></div>
+    <div class="stat-card"><div class="label">Current Streak</div><div class="value">${streak}</div><div class="sub">days</div></div>
   `;
 }
 
-function renderPersonalHistory(checkIns) {
-  const grouped = {};
-  checkIns.forEach(ci => {
-    const d = (ci.occurred_at || ci.created_at || '').slice(0, 10);
-    if (d) grouped[d] = (grouped[d] || 0) + 1;
-  });
-  const sorted = Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
+// ── GitHub-style Contribution Heatmap ──
+function renderHeatmap(dailyCapped, range) {
+  const container = document.getElementById('heatmap-container');
+  container.innerHTML = '';
 
-  createChart('chart-personal-history', 'bar', {
-    labels: sorted.map(e => e[0]),
-    datasets: [{
-      label: 'Workouts',
-      data: sorted.map(e => e[1]),
-      backgroundColor: '#6366f1',
-      borderRadius: 3
-    }]
-  }, {
-    scales: {
-      x: { type: 'time', time: { unit: getBestTimeUnit(sorted.length), tooltipFormat: 'MMM d, yyyy' } },
-      y: { beginAtZero: true, ticks: { precision: 0 } }
+  // Determine date range for heatmap
+  const dates = Object.keys(dailyCapped).sort();
+  if (dates.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.85rem;">No check-ins in this period</p>';
+    return;
+  }
+
+  let startDate, endDate;
+  if (range.start) {
+    startDate = new Date(range.start);
+    endDate = new Date(range.end);
+  } else {
+    startDate = new Date(dates[0]);
+    endDate = new Date();
+  }
+
+  // Align startDate to Monday
+  const startDay = startDate.getDay();
+  startDate.setDate(startDate.getDate() - (startDay === 0 ? 6 : startDay - 1));
+  startDate.setHours(0, 0, 0, 0);
+
+  // Align endDate to Sunday
+  const endDay = endDate.getDay();
+  if (endDay !== 0) endDate.setDate(endDate.getDate() + (7 - endDay));
+  endDate.setHours(23, 59, 59, 999);
+
+  // Build weeks array
+  const weeks = [];
+  const cursor = new Date(startDate);
+  while (cursor <= endDate) {
+    const week = [];
+    for (let d = 0; d < 7; d++) {
+      week.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 1);
     }
-  });
-}
+    weeks.push(week);
+  }
 
-function renderPersonalActivities(checkIns) {
-  const counts = {};
-  checkIns.forEach(ci => {
-    (ci.check_in_activities || []).forEach(a => {
-      const type = a.platform_activity || 'other';
-      counts[type] = (counts[type] || 0) + 1;
+  // Month labels
+  const monthsDiv = document.createElement('div');
+  monthsDiv.className = 'heatmap-months';
+  let lastMonth = -1;
+  const cellWidth = 16; // 13px + 3px gap
+  weeks.forEach((week) => {
+    const m = week[0].getMonth();
+    const span = document.createElement('span');
+    span.className = 'heatmap-month-label';
+    span.style.width = cellWidth + 'px';
+    if (m !== lastMonth) {
+      span.textContent = week[0].toLocaleDateString('en-US', { month: 'short' });
+      lastMonth = m;
+    }
+    monthsDiv.appendChild(span);
+  });
+  container.appendChild(monthsDiv);
+
+  // Grid: 7 rows (Mon=0 to Sun=6), columns = weeks
+  const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', 'Sun'];
+  const grid = document.createElement('div');
+  grid.style.display = 'flex';
+
+  // Day labels column
+  const labelsCol = document.createElement('div');
+  labelsCol.style.display = 'flex';
+  labelsCol.style.flexDirection = 'column';
+  labelsCol.style.gap = '3px';
+  labelsCol.style.marginRight = '3px';
+  dayLabels.forEach(l => {
+    const lbl = document.createElement('div');
+    lbl.className = 'heatmap-day-label';
+    lbl.textContent = l;
+    lbl.style.height = '13px';
+    lbl.style.lineHeight = '13px';
+    labelsCol.appendChild(lbl);
+  });
+  grid.appendChild(labelsCol);
+
+  // Week columns
+  const heatmap = document.createElement('div');
+  heatmap.className = 'heatmap';
+  weeks.forEach(week => {
+    const col = document.createElement('div');
+    col.className = 'heatmap-column';
+    week.forEach(date => {
+      const dateStr = date.toISOString().slice(0, 10);
+      const count = dailyCapped[dateStr] || 0;
+      const level = count === 0 ? 0 : count === 1 ? 2 : 4; // 0, 1 check-in, 2 check-ins
+      const cell = document.createElement('div');
+      cell.className = `heatmap-cell heatmap-level-${level}`;
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      cell.dataset.tooltip = `${count} check-in${count !== 1 ? 's' : ''} on ${dayName}`;
+      col.appendChild(cell);
     });
+    heatmap.appendChild(col);
   });
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  grid.appendChild(heatmap);
+  container.appendChild(grid);
 
-  createChart('chart-personal-activities', 'doughnut', {
-    labels: sorted.map(e => formatActivity(e[0])),
-    datasets: [{
-      data: sorted.map(e => e[1]),
-      backgroundColor: sorted.map(e => ACTIVITY_COLORS[e[0]] || ACTIVITY_COLORS.other),
-      borderWidth: 0
-    }]
-  }, {
-    plugins: { legend: { position: 'right', labels: { boxWidth: 14, padding: 12 } } }
-  });
+  // Legend
+  const legend = document.createElement('div');
+  legend.className = 'heatmap-legend';
+  legend.innerHTML = `
+    <span>Less</span>
+    <div class="heatmap-cell heatmap-level-0"></div>
+    <div class="heatmap-cell heatmap-level-2"></div>
+    <div class="heatmap-cell heatmap-level-4"></div>
+    <span>More</span>
+  `;
+  container.appendChild(legend);
 }
 
-function renderPersonalCalories(checkIns) {
-  const sorted = checkIns
-    .map(ci => ({ x: (ci.occurred_at || ci.created_at || '').slice(0, 10), y: ci.calories || 0 }))
-    .filter(d => d.x)
-    .sort((a, b) => a.x.localeCompare(b.x));
+// ── Personal Cumulative ──
+function renderPersonalCumulative(checkIns, scores) {
+  const mid = String(selectedMemberId);
+  const memberWeeks = scores[mid] || {};
+  const sortedWeeks = Object.keys(memberWeeks).sort();
 
-  createChart('chart-personal-calories', 'line', {
+  let cum = 0;
+  const data = sortedWeeks.map((wk, i) => {
+    cum += memberWeeks[wk];
+    return { x: `W${i + 1}`, y: cum };
+  });
+
+  createChart('chart-personal-cumulative', 'line', {
+    labels: sortedWeeks.map((_, i) => `W${i + 1}`),
     datasets: [{
-      label: 'Calories',
-      data: sorted,
-      borderColor: '#22c55e',
-      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+      label: 'Cumulative Check-ins',
+      data: data.map(d => d.y),
+      borderColor: '#6366f1',
+      backgroundColor: 'rgba(99, 102, 241, 0.1)',
       fill: true,
-      tension: 0.3,
-      pointRadius: 3,
-      pointBackgroundColor: '#22c55e'
+      tension: 0.2,
+      pointRadius: 4,
+      pointBackgroundColor: '#6366f1',
+      borderWidth: 2.5
     }]
   }, {
     scales: {
-      x: { type: 'time', time: { tooltipFormat: 'MMM d, yyyy' } },
-      y: { beginAtZero: true }
-    }
+      x: { title: { display: true, text: 'Week' } },
+      y: { beginAtZero: true, ticks: { precision: 0 } }
+    },
+    plugins: { legend: { display: false } }
   });
 }
 
-function renderPersonalDuration(checkIns) {
-  const sorted = checkIns
-    .map(ci => ({
-      x: (ci.occurred_at || ci.created_at || '').slice(0, 10),
-      y: ci.duration || 0,
-      title: ci.title || ''
-    }))
-    .filter(d => d.x)
-    .sort((a, b) => a.x.localeCompare(b.x));
+// ── Personal Weekly Bar ──
+function renderPersonalWeekly(scores) {
+  const mid = String(selectedMemberId);
+  const memberWeeks = scores[mid] || {};
+  const sortedWeeks = Object.keys(memberWeeks).sort();
+  const weekLabels = sortedWeeks.map((_, i) => `W${i + 1}`);
 
-  createChart('chart-personal-duration', 'bar', {
-    labels: sorted.map(d => d.x),
+  createChart('chart-personal-weekly', 'bar', {
+    labels: weekLabels,
     datasets: [{
-      label: 'Duration (min)',
-      data: sorted.map(d => d.y),
-      backgroundColor: '#f59e0b',
-      borderRadius: 3
+      label: 'Check-ins',
+      data: sortedWeeks.map(wk => memberWeeks[wk]),
+      backgroundColor: sortedWeeks.map(wk => memberWeeks[wk] >= WEEK_CAP ? '#22c55e' : '#6366f1'),
+      borderRadius: 4,
+      barPercentage: 0.7
     }]
   }, {
     scales: {
-      x: { type: 'time', time: { tooltipFormat: 'MMM d, yyyy' } },
-      y: { beginAtZero: true }
+      y: {
+        beginAtZero: true,
+        max: WEEK_CAP + 2,
+        ticks: { precision: 0 },
+        title: { display: true, text: 'Capped Check-ins' }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      annotation: undefined
     }
   });
 }
 
-function renderPersonalPoints(checkIns) {
-  const grouped = {};
-  checkIns.forEach(ci => {
-    const d = (ci.occurred_at || ci.created_at || '').slice(0, 10);
-    if (d) grouped[d] = (grouped[d] || 0) + (ci.points || 0);
-  });
-  const sorted = Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0]));
-
-  // Cumulative
-  let cumulative = 0;
-  const cumData = sorted.map(([date, pts]) => {
-    cumulative += pts;
-    return { x: date, y: cumulative };
-  });
-
-  createChart('chart-personal-points', 'line', {
-    datasets: [{
-      label: 'Cumulative Points',
-      data: cumData,
-      borderColor: '#8b5cf6',
-      backgroundColor: 'rgba(139, 92, 246, 0.1)',
-      fill: true,
-      tension: 0.3,
-      pointRadius: 2,
-      pointBackgroundColor: '#8b5cf6'
-    }]
-  }, {
-    scales: {
-      x: { type: 'time', time: { tooltipFormat: 'MMM d, yyyy' } },
-      y: { beginAtZero: true }
-    }
-  });
-}
-
+// ── Personal Weekday ──
 function renderPersonalWeekday(checkIns) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const counts = new Array(7).fill(0);
   checkIns.forEach(ci => {
     const d = new Date(ci.occurred_at || ci.created_at);
-    let day = d.getDay();
-    day = day === 0 ? 6 : day - 1;
+    let day = d.getDay(); day = day === 0 ? 6 : day - 1;
     counts[day]++;
   });
-
   createChart('chart-personal-weekday', 'bar', {
     labels: days,
     datasets: [{
-      label: 'Workouts',
+      label: 'Check-ins',
       data: counts,
       backgroundColor: days.map((_, i) => COLORS[i]),
       borderRadius: 6,
@@ -616,15 +691,14 @@ function renderPersonalWeekday(checkIns) {
   });
 }
 
-// ── Chart helpers ──
-function createChart(canvasId, type, data, extraOptions = {}) {
-  if (charts[canvasId]) {
-    charts[canvasId].destroy();
-  }
+// ═══════════════════════════════════════════════════════════
+// ── CHART HELPERS ──
+// ═══════════════════════════════════════════════════════════
 
+function createChart(canvasId, type, data, extraOptions = {}) {
+  if (charts[canvasId]) charts[canvasId].destroy();
   const ctx = document.getElementById(canvasId);
   if (!ctx) return;
-
   const defaultOptions = {
     responsive: true,
     maintainAspectRatio: true,
@@ -632,50 +706,10 @@ function createChart(canvasId, type, data, extraOptions = {}) {
       legend: { display: type === 'doughnut' || (data.datasets && data.datasets.length > 1 && type !== 'bar') }
     }
   };
-
-  charts[canvasId] = new Chart(ctx, {
-    type,
-    data,
-    options: deepMerge(defaultOptions, extraOptions)
-  });
+  charts[canvasId] = new Chart(ctx, { type, data, options: deepMerge(defaultOptions, extraOptions) });
 }
 
-function memberBarChart(canvasId, sorted, members, label) {
-  createChart(canvasId, 'bar', {
-    labels: sorted.map(e => memberName(e[0], members)),
-    datasets: [{
-      label,
-      data: sorted.map(e => e[1]),
-      backgroundColor: sorted.map((_, i) => COLORS[i % COLORS.length]),
-      borderRadius: 6,
-      barPercentage: 0.7
-    }]
-  }, {
-    indexAxis: 'y',
-    scales: { x: { beginAtZero: true } },
-    plugins: { legend: { display: false } }
-  });
-}
-
-// ── Utilities ──
-function memberName(id, members) {
-  const m = members[parseInt(id)];
-  return m ? m.full_name.split(' ').slice(0, 2).join(' ') : `User ${id}`;
-}
-
-function formatActivity(type) {
-  return (type || 'other').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-function formatNum(n) {
-  return n.toLocaleString('en-US');
-}
-
-function getBestTimeUnit(count) {
-  if (count > 180) return 'month';
-  if (count > 30) return 'week';
-  return 'day';
-}
+function formatNum(n) { return n.toLocaleString('en-US'); }
 
 function deepMerge(target, source) {
   const result = { ...target };

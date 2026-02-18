@@ -56,6 +56,9 @@
         <span id="period-label"></span>
         <button class="nav-btn" id="next-period">&rarr;</button>
       </div>
+      <div class="cap-info">
+        Cap: 2/day, 10/week
+      </div>
     </div>
 
     <!-- Overview Tab -->
@@ -63,67 +66,43 @@
       <div class="stats-row" id="overview-stats"></div>
       <div class="charts-grid">
         <div class="chart-card wide">
-          <h3>Workouts Over Time</h3>
-          <canvas id="chart-workouts-time"></canvas>
+          <h3>Check-in Race (Cumulative)</h3>
+          <canvas id="chart-race"></canvas>
         </div>
         <div class="chart-card">
-          <h3>Total Workouts per Member</h3>
-          <canvas id="chart-workouts-member"></canvas>
+          <h3>Check-ins Ranking (Capped)</h3>
+          <canvas id="chart-ranking"></canvas>
         </div>
         <div class="chart-card">
-          <h3>Calories Burned per Member</h3>
-          <canvas id="chart-calories-member"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Activity Types Distribution</h3>
-          <canvas id="chart-activity-types"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Total Duration per Member (hours)</h3>
-          <canvas id="chart-duration-member"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Points per Member</h3>
-          <canvas id="chart-points-member"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Average Calories per Workout</h3>
-          <canvas id="chart-avg-calories"></canvas>
+          <h3>Weekly Check-ins</h3>
+          <canvas id="chart-weekly-overview"></canvas>
         </div>
         <div class="chart-card wide">
-          <h3>Workout Heatmap (Day of Week)</h3>
-          <canvas id="chart-heatmap"></canvas>
+          <h3>Day of Week Distribution</h3>
+          <canvas id="chart-weekday-overview"></canvas>
         </div>
       </div>
     </section>
 
-    <!-- Personal Tab (dynamic) -->
+    <!-- Personal Tab -->
     <section id="tab-personal" class="tab-content">
       <div class="personal-header" id="personal-header"></div>
       <div class="stats-row" id="personal-stats"></div>
       <div class="charts-grid">
         <div class="chart-card wide">
-          <h3>Workout History</h3>
-          <canvas id="chart-personal-history"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Activity Breakdown</h3>
-          <canvas id="chart-personal-activities"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Calories Over Time</h3>
-          <canvas id="chart-personal-calories"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Duration per Workout (min)</h3>
-          <canvas id="chart-personal-duration"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Points Over Time</h3>
-          <canvas id="chart-personal-points"></canvas>
+          <h3>Contribution Heatmap</h3>
+          <div id="heatmap-container" class="heatmap-wrapper"></div>
         </div>
         <div class="chart-card wide">
-          <h3>Workout Days (Day of Week)</h3>
+          <h3>Cumulative Check-ins</h3>
+          <canvas id="chart-personal-cumulative"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Weekly Check-ins (Capped)</h3>
+          <canvas id="chart-personal-weekly"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Workout Days</h3>
           <canvas id="chart-personal-weekday"></canvas>
         </div>
       </div>

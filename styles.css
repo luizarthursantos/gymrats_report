@@ -240,6 +240,16 @@ main {
   text-align: center;
 }
 
+.cap-info {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
 /* Stats Row */
 .stats-row {
   display: grid;
@@ -302,7 +312,7 @@ main {
 
 .chart-card canvas {
   width: 100% !important;
-  max-height: 320px;
+  max-height: 400px;
 }
 
 /* Personal header */
@@ -352,6 +362,97 @@ main {
 
 .tab-content.active {
   display: block;
+}
+
+/* ── GitHub-style Contribution Heatmap ── */
+.heatmap-wrapper {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.heatmap {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.heatmap-months {
+  display: flex;
+  padding-left: 36px;
+  margin-bottom: 4px;
+  gap: 0;
+}
+
+.heatmap-month-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.heatmap-day-label {
+  width: 30px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-align: right;
+  padding-right: 6px;
+  flex-shrink: 0;
+}
+
+.heatmap-column {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+  position: relative;
+  cursor: default;
+}
+
+.heatmap-cell[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #24292f;
+  color: #e6edf3;
+  font-size: 0.72rem;
+  padding: 5px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.heatmap-level-0 { background: #161b22; }
+.heatmap-level-1 { background: #0e4429; }
+.heatmap-level-2 { background: #006d32; }
+.heatmap-level-3 { background: #26a641; }
+.heatmap-level-4 { background: #39d353; }
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.heatmap-legend .heatmap-cell {
+  width: 11px;
+  height: 11px;
 }
 
 /* Responsive */
