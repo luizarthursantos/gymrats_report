@@ -324,7 +324,14 @@ main {
   margin-bottom: 16px;
 }
 
-.fullscreen-btn {
+.chart-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.fullscreen-btn,
+.interact-btn {
   background: none;
   border: 1px solid var(--border);
   color: var(--text-secondary);
@@ -339,9 +346,16 @@ main {
   flex-shrink: 0;
 }
 
-.fullscreen-btn:hover {
+.fullscreen-btn:hover,
+.interact-btn:hover {
   background: var(--bg-hover);
   color: var(--text);
+}
+
+.interact-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
 }
 
 .chart-container {
@@ -352,6 +366,11 @@ main {
 .chart-container canvas {
   width: 100% !important;
   height: 100% !important;
+  pointer-events: none;
+}
+
+.chart-card.interactive .chart-container canvas {
+  pointer-events: auto;
 }
 
 /* Fullscreen overlay */

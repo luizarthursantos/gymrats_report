@@ -711,21 +711,36 @@ function createChart(canvasId, type, data, extraOptions = {}) {
   charts[canvasId] = new Chart(ctx, { type, data, options: deepMerge(defaultOptions, extraOptions) });
 }
 
-// ── Fullscreen ──
+// ── Fullscreen & Interact ──
 function setupFullscreen() {
+  // Fullscreen toggle
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.fullscreen-btn');
-    if (!btn) return;
-    const card = btn.closest('.chart-card');
-    if (!card) return;
-    card.classList.toggle('fullscreen');
-    // Resize charts inside this card after toggle
-    const canvas = card.querySelector('canvas');
-    if (canvas) {
-      const chartId = canvas.id;
-      if (charts[chartId]) {
-        setTimeout(() => charts[chartId].resize(), 50);
+    const fsBtn = e.target.closest('.fullscreen-btn');
+    if (fsBtn) {
+      const card = fsBtn.closest('.chart-card');
+      if (!card) return;
+      card.classList.toggle('fullscreen');
+      // Auto-enable interaction in fullscreen
+      if (card.classList.contains('fullscreen')) {
+        card.classList.add('interactive');
+        const ib = card.querySelector('.interact-btn');
+        if (ib) ib.classList.add('active');
       }
+      const canvas = card.querySelector('canvas');
+      if (canvas && charts[canvas.id]) {
+        setTimeout(() => charts[canvas.id].resize(), 50);
+      }
+      return;
+    }
+
+    // Interact toggle
+    const intBtn = e.target.closest('.interact-btn');
+    if (intBtn) {
+      const card = intBtn.closest('.chart-card');
+      if (!card) return;
+      const isActive = card.classList.toggle('interactive');
+      intBtn.classList.toggle('active', isActive);
+      return;
     }
   });
 
@@ -735,6 +750,9 @@ function setupFullscreen() {
       const fs = document.querySelector('.chart-card.fullscreen');
       if (fs) {
         fs.classList.remove('fullscreen');
+        fs.classList.remove('interactive');
+        const ib = fs.querySelector('.interact-btn');
+        if (ib) ib.classList.remove('active');
         const canvas = fs.querySelector('canvas');
         if (canvas && charts[canvas.id]) {
           setTimeout(() => charts[canvas.id].resize(), 50);
