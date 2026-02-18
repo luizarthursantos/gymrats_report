@@ -21,6 +21,9 @@ const WEEK_CAP = 10;
 Chart.defaults.color = '#8b8fa3';
 Chart.defaults.borderColor = '#2a2e3a';
 Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+Chart.defaults.elements.point.radius = 0;
+Chart.defaults.elements.point.hoverRadius = 0;
+Chart.defaults.elements.point.hitRadius = 0;
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
@@ -323,7 +326,7 @@ function renderRaceChart(checkIns, members, scores) {
       backgroundColor: COLORS[idx % COLORS.length],
       borderWidth: 2.5,
       pointRadius: 0,
-      pointHoverRadius: 5,
+      pointHoverRadius: 0,
       tension: 0.15,
       fill: false
     };
@@ -624,7 +627,7 @@ function renderPersonalCumulative(checkIns, scores) {
       fill: true,
       tension: 0.2,
       pointRadius: 0,
-      pointHoverRadius: 5,
+      pointHoverRadius: 0,
       pointBackgroundColor: '#6366f1',
       borderWidth: 2.5
     }]

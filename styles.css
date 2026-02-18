@@ -332,11 +332,11 @@ main {
 
 .fullscreen-btn,
 .interact-btn {
-  background: none;
+  background: var(--bg-hover);
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
@@ -394,7 +394,7 @@ main {
 }
 
 .chart-card.fullscreen .fullscreen-btn svg {
-  transform: rotate(45deg);
+  transform: rotate(180deg);
 }
 
 /* Personal header */
