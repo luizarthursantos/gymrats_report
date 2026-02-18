@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupUpload();
   setupTabs();
   setupPeriodFilters();
+  setupFullscreen();
   tryLoadDefaultData();
 });
 
@@ -321,8 +322,8 @@ function renderRaceChart(checkIns, members, scores) {
       borderColor: COLORS[idx % COLORS.length],
       backgroundColor: COLORS[idx % COLORS.length],
       borderWidth: 2.5,
-      pointRadius: 3,
-      pointHoverRadius: 6,
+      pointRadius: 0,
+      pointHoverRadius: 5,
       tension: 0.15,
       fill: false
     };
@@ -622,7 +623,8 @@ function renderPersonalCumulative(checkIns, scores) {
       backgroundColor: 'rgba(99, 102, 241, 0.1)',
       fill: true,
       tension: 0.2,
-      pointRadius: 4,
+      pointRadius: 0,
+      pointHoverRadius: 5,
       pointBackgroundColor: '#6366f1',
       borderWidth: 2.5
     }]
@@ -701,12 +703,45 @@ function createChart(canvasId, type, data, extraOptions = {}) {
   if (!ctx) return;
   const defaultOptions = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: type === 'doughnut' || (data.datasets && data.datasets.length > 1 && type !== 'bar') }
     }
   };
   charts[canvasId] = new Chart(ctx, { type, data, options: deepMerge(defaultOptions, extraOptions) });
+}
+
+// ── Fullscreen ──
+function setupFullscreen() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.fullscreen-btn');
+    if (!btn) return;
+    const card = btn.closest('.chart-card');
+    if (!card) return;
+    card.classList.toggle('fullscreen');
+    // Resize charts inside this card after toggle
+    const canvas = card.querySelector('canvas');
+    if (canvas) {
+      const chartId = canvas.id;
+      if (charts[chartId]) {
+        setTimeout(() => charts[chartId].resize(), 50);
+      }
+    }
+  });
+
+  // Escape key closes fullscreen
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const fs = document.querySelector('.chart-card.fullscreen');
+      if (fs) {
+        fs.classList.remove('fullscreen');
+        const canvas = fs.querySelector('canvas');
+        if (canvas && charts[canvas.id]) {
+          setTimeout(() => charts[canvas.id].resize(), 50);
+        }
+      }
+    }
+  });
 }
 
 function formatNum(n) { return n.toLocaleString('en-US'); }
