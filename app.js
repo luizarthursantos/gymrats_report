@@ -290,18 +290,24 @@ function memberName(id, members) {
 // ── Tabs ──
 function setupTabs() {
   document.querySelector('.tab[data-tab="overview"]').addEventListener('click', () => switchTab('overview'));
+  document.getElementById('member-tab').addEventListener('click', () => {
+    const select = document.getElementById('member-select');
+    const memberId = parseInt(select.value);
+    if (memberId) switchTab('personal', memberId);
+  });
+  document.getElementById('member-select').addEventListener('change', (e) => {
+    switchTab('personal', parseInt(e.target.value));
+  });
 }
 
 function buildMemberTabs() {
-  const container = document.getElementById('member-tabs');
-  container.innerHTML = '';
+  const select = document.getElementById('member-select');
+  select.innerHTML = '<option value="" disabled selected>Select member</option>';
   (challengeData.members || []).sort((a, b) => a.full_name.localeCompare(b.full_name)).forEach(m => {
-    const btn = document.createElement('button');
-    btn.className = 'tab';
-    btn.dataset.memberId = m.id;
-    btn.textContent = m.full_name.split(' ')[0];
-    btn.addEventListener('click', () => switchTab('personal', m.id));
-    container.appendChild(btn);
+    const opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.full_name;
+    select.appendChild(opt);
   });
 }
 
@@ -313,9 +319,8 @@ function switchTab(tab, memberId = null) {
   if (tab === 'overview') {
     document.querySelector('.tab[data-tab="overview"]').classList.add('active');
   } else {
-    document.querySelectorAll('.tab[data-member-id]').forEach(t => {
-      if (parseInt(t.dataset.memberId) === memberId) t.classList.add('active');
-    });
+    document.getElementById('member-tab').classList.add('active');
+    if (memberId) document.getElementById('member-select').value = memberId;
   }
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById(tab === 'overview' ? 'tab-overview' : 'tab-personal').classList.add('active');

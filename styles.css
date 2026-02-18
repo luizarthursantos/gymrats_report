@@ -60,10 +60,6 @@ header {
   white-space: nowrap;
 }
 
-.header-right {
-  flex-shrink: 0;
-}
-
 .challenge-description {
   font-size: 0.8rem;
   color: var(--text-secondary);
@@ -314,6 +310,7 @@ main {
   border-radius: 8px;
   transition: all 0.2s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab:hover {
@@ -334,9 +331,23 @@ main {
   flex-shrink: 0;
 }
 
-.member-tabs {
-  display: flex;
-  gap: 4px;
+.member-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+  max-width: 180px;
+}
+
+.member-select:focus {
+  border-color: var(--accent);
 }
 
 /* Period Filters */
@@ -724,6 +735,10 @@ main {
     padding: 12px 16px;
   }
 
+  .header-left h1 {
+    font-size: 1.1rem;
+  }
+
   .upload-label {
     display: none;
   }
@@ -737,12 +752,26 @@ main {
     padding: 12px;
   }
 
+  .tabs {
+    gap: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .tab-separator {
+    margin: 0 4px;
+  }
+
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .stat-card {
-    padding: 12px;
+    padding: 10px;
   }
 
   .stat-card .value {
@@ -761,17 +790,13 @@ main {
     height: 260px;
   }
 
-  .tabs {
-    gap: 2px;
-  }
-
-  .tab {
-    padding: 8px 12px;
-    font-size: 0.82rem;
-  }
-
   .filters {
     gap: 8px;
+  }
+
+  .period-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
   }
 
   .cap-info {
