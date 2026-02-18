@@ -16,6 +16,9 @@
         <p id="challenge-desc" class="challenge-description"></p>
       </div>
       <div class="header-right">
+        <button class="header-icon-btn hidden" id="refresh-btn" aria-label="Refresh data" title="Refresh from GymRats">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
         <label class="upload-btn" for="json-upload">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span class="upload-label">Upload JSON</span>
@@ -29,8 +32,22 @@
     <div class="no-data-content">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <h2>No data loaded</h2>
-      <p>Upload a GymRats challenge JSON file to get started</p>
-      <label class="upload-btn large" for="json-upload-empty">
+      <p>Fetch from GymRats or upload a JSON file</p>
+
+      <div class="fetch-form">
+        <input type="email" id="gr-email" placeholder="GymRats email" autocomplete="email">
+        <input type="password" id="gr-password" placeholder="Password" autocomplete="current-password">
+        <input type="text" id="gr-challenge" placeholder="Challenge ID">
+        <button class="upload-btn large" id="fetch-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Fetch from GymRats
+        </button>
+        <p id="fetch-status" class="fetch-status"></p>
+      </div>
+
+      <div class="fetch-divider"><span>or</span></div>
+
+      <label class="upload-btn large secondary" for="json-upload-empty">
         Upload JSON File
       </label>
       <input type="file" id="json-upload-empty" accept=".json" hidden>

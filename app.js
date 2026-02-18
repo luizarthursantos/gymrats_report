@@ -25,9 +25,12 @@ Chart.defaults.elements.point.radius = 0;
 Chart.defaults.elements.point.hoverRadius = 0;
 Chart.defaults.elements.point.hitRadius = 0;
 
+const API_BASE = 'https://www.gymrats.app/api';
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   setupUpload();
+  setupFetch();
   setupTabs();
   setupPeriodFilters();
   setupFullscreen();
@@ -62,6 +65,192 @@ function handleUpload(e) {
   };
   reader.readAsText(file);
   e.target.value = '';
+}
+
+// ── GymRats API Fetch ──
+let savedToken = null;
+let savedChallengeId = null;
+
+function setupFetch() {
+  const fetchBtn = document.getElementById('fetch-btn');
+  if (fetchBtn) fetchBtn.addEventListener('click', handleFetch);
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) refreshBtn.addEventListener('click', handleRefresh);
+
+  // Submit on Enter in fetch form
+  ['gr-email', 'gr-password', 'gr-challenge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFetch(); });
+  });
+}
+
+function setFetchStatus(msg, isError) {
+  const el = document.getElementById('fetch-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.toggle('error', !!isError);
+}
+
+async function handleFetch() {
+  const email = document.getElementById('gr-email').value.trim();
+  const password = document.getElementById('gr-password').value;
+  const challengeId = document.getElementById('gr-challenge').value.trim();
+
+  if (!email || !password || !challengeId) {
+    setFetchStatus('Please fill in all fields', true);
+    return;
+  }
+
+  const fetchBtn = document.getElementById('fetch-btn');
+  fetchBtn.disabled = true;
+  setFetchStatus('Logging in...');
+
+  try {
+    // Login
+    const tokenRes = await apiPost('/tokens', `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, 'application/x-www-form-urlencoded');
+    if (!tokenRes.data || !tokenRes.data.token) throw new Error('Login failed. Check your credentials.');
+    const token = tokenRes.data.token;
+
+    savedToken = token;
+    savedChallengeId = challengeId;
+
+    await fetchChallengeData(token, challengeId);
+  } catch (err) {
+    setFetchStatus(err.message || 'Failed to fetch data', true);
+  } finally {
+    fetchBtn.disabled = false;
+  }
+}
+
+async function handleRefresh() {
+  if (!savedToken || !savedChallengeId) return;
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  try {
+    await fetchChallengeData(savedToken, savedChallengeId);
+  } catch (err) {
+    alert('Refresh failed: ' + (err.message || 'Unknown error'));
+  } finally {
+    btn.classList.remove('spinning');
+  }
+}
+
+async function fetchChallengeData(token, challengeId) {
+  setFetchStatus('Fetching challenge info...');
+
+  // Fetch challenge details
+  let challenge;
+  try {
+    const res = await apiGet(`/challenges/${challengeId}`, token);
+    challenge = res.data || {};
+  } catch {
+    challenge = { id: parseInt(challengeId), name: 'Challenge ' + challengeId };
+  }
+
+  // Fetch members
+  setFetchStatus('Fetching members...');
+  let members = [];
+  try {
+    const res = await apiGet(`/challenges/${challengeId}/members`, token);
+    members = (res.data || []).map(m => ({
+      id: m.id,
+      role: m.role || 'member',
+      created_at: m.created_at,
+      full_name: m.full_name,
+      profile_picture_url: m.profile_picture_url || null
+    }));
+  } catch {
+    // Will extract from workouts below
+  }
+
+  // Fetch all workouts (paginated)
+  setFetchStatus('Fetching check-ins...');
+  const allWorkouts = [];
+  let page = 0;
+  while (true) {
+    const res = await apiGet(`/challenges/${challengeId}/workouts?page=${page}`, token);
+    const workouts = res.data || [];
+    if (workouts.length === 0) break;
+    allWorkouts.push(...workouts);
+    page++;
+    setFetchStatus(`Fetching check-ins... (${allWorkouts.length} loaded)`);
+  }
+
+  // Extract members from workouts if not fetched
+  if (members.length === 0) {
+    const seen = {};
+    allWorkouts.forEach(w => {
+      const acc = w.account;
+      if (acc && !seen[acc.id]) {
+        seen[acc.id] = true;
+        members.push({
+          id: acc.id,
+          role: 'member',
+          created_at: w.created_at,
+          full_name: acc.full_name,
+          profile_picture_url: acc.profile_picture_url || null
+        });
+      }
+    });
+  }
+
+  // Transform workouts to check_ins format
+  const checkIns = allWorkouts.map(w => ({
+    id: w.id,
+    account_id: w.account ? w.account.id : w.gym_rats_user_id,
+    occurred_at: w.occurred_at,
+    created_at: w.created_at,
+    title: w.title,
+    description: w.description,
+    duration: w.duration,
+    calories: w.calories,
+    distance_miles: w.distance,
+    duration_millis: w.duration_millis,
+    photo_url: w.photo_url,
+    points: w.points,
+    steps: w.steps,
+    activity_type: w.activity_type,
+    activity_count: w.activity_count || 1,
+    reactions: w.reactions || []
+  }));
+
+  const data = {
+    id: challenge.id || parseInt(challengeId),
+    name: challenge.name || 'GymRats Challenge',
+    description: challenge.description || '',
+    start_date: challenge.start_date,
+    end_date: challenge.end_date,
+    score_by: challenge.score_by || 'workouts',
+    photo_url: challenge.photo_url,
+    members,
+    check_ins: checkIns
+  };
+
+  setFetchStatus(`Loaded ${checkIns.length} check-ins from ${members.length} members`);
+
+  // Show refresh button in header
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) refreshBtn.classList.remove('hidden');
+
+  loadData(data);
+}
+
+async function apiGet(path, token) {
+  const res = await fetch(API_BASE + path, {
+    headers: { 'Authorization': token }
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+async function apiPost(path, body, contentType) {
+  const res = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': contentType },
+    body
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
 }
 
 // ── Load Data ──
