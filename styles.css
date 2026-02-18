@@ -435,7 +435,7 @@ main {
 /* Stats Row */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -768,14 +768,19 @@ main {
 
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .stat-card {
     padding: 10px;
   }
 
+  .stat-card .label {
+    font-size: 0.7rem;
+  }
+
   .stat-card .value {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 
   .charts-grid {
